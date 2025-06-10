@@ -389,6 +389,7 @@ def add_budget():
 
     email = session['user_email']
     category = request.form.get('category')
+    category=category.capitalize()
     limit = float(request.form.get('limit'))
 
     if not category or limit <= 0:
@@ -413,6 +414,8 @@ def add_budget():
 @app.route('/edit-budget/<budget_id>', methods=['POST'])
 def edit_budget(budget_id):
     category = request.form.get('category')
+    category=category.capitalize()
+    category=category.capitalize()
     limit = float(request.form.get('limit'))
     mongo_budgets.update_one(
         {"_id": ObjectId(budget_id)},
