@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Group Challenges</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <style>
+    .card { border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .badge-circle {
+      width: 35px; height: 35px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      background-color: #e0f7f9; color: #444; font-weight: bold;
+      margin-left: -10px;
+    }
+  </style>
+</head>
+<body class="bg-light">
+    {% extends "dashboard.html" %}
+
+{% block title %}Dashboard - Wealthyfyme{% endblock %}
+
+{% block content %}
+    <div class="container mt-3">
+    <h1 class="mb-4 text-success">Group Challenges</h1>
+
+  <!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="challengeTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link " id="available-tab" data-bs-toggle="tab" data-bs-target="#available" type="button" role="tab">Available Challenges</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link " id="joined-tab" data-bs-toggle="tab" data-bs-target="#joined" type="button" role="tab">Joined Challenges</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">Completed Challenges</button>
+    </li>
+  </ul>
+  
+  <!-- Tabs Content -->
+  <div class="tab-content">
+    <!-- Available Challenges to Join -->
+    <div class="tab-pane fade show active" id="available" role="tabpanel">
+      <div class="row g-4" id="availableChallenges">
+        {% if available_challenges %}
+          {% for c in available_challenges %}
+          <div class="col-md-4">
+            <div class="card p-3">
+              <h5>{{ c.name }}</h5>
+              <p class="text-muted small">{{ c.description }}</p>
+              <p><strong>Goal:</strong> ₹{{ c.amount }}</p>
+              <p><strong>Deadline:</strong> {{ c.deadline }}</p>
+              <form method="post" action="{{ url_for('join_challenge', challenge_id=c._id) }}" class="mt-3">
+                <button type="submit" class="btn btn-outline-success rounded-pill w-100">
+                  <i class="bi bi-person-plus me-1"></i> Join Challenge
+                </button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+        <div>
+          <h1 class="text-muted align-items-end" >Hello, Excited for Group Challenges.</h1>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  
+   <!-- Joined Challenges (can contribute) -->
+<div class="tab-pane fade" id="joined" role="tabpanel">
+    <div class="d-flex justify-content-between mb-3">
+      <h4>Your Savings Challenges</h4>
+      <button class="btn text-white" style="background-color: #00bfa5;" data-bs-toggle="modal" data-bs-target="#newChallengeModal">+ New Challenge</button>
+    </div>
+  
+    <div class="row g-4" id="joinedChallenges">
+      {% if joined_challenges %}
+        {% for c in joined_challenges %}
+          {% set cid = c._id|string %}
+          {% set your_amount = user_contributions.get(cid, {}).get(user_email, 0) %}
+          {% set total_amount = total_contributions.get(cid, 0) %}
+          {% set total_percent = (total_amount / c.amount * 100) if c.amount > 0 else 0 %}
+          {% set your_percent = (your_amount / c.amount * 100) if c.amount > 0 else 0 %}
+          
+          <div class="col-md-4">
+            <div class="card p-3">
+              <h5>{{ c.name }}</h5>
+              <p class="text-muted small">{{ c.description }}</p>
+              <p><strong>Your contribution:</strong> ₹{{ your_amount }}</p>
+              <p><strong>Others contribution:</strong> ₹{{ total_amount-your_amount }}</p>
+              <p><strong>Total Contribution:</strong> ₹{{ total_amount }} of ₹{{ c.amount }}</p>
+  
+              <div class="progress mb-2">
+                <div class="progress-bar bg-success" style="width: {{ total_percent|round(1) }}%;">
+                  {{ total_percent|round(0) }}%
+                </div>
+              </div>
+  
+              <small class="text-muted">{{ your_percent|round(1) }}% contributed by you</small>
+  
+              <div class="d-flex justify-content-between mt-3">
+                <span><i class="bi bi-clock me-1"></i>{{ c.deadline }}</span>
+                <span><i class="bi bi-people me-1"></i>{{ c.joined_users | length }} members</span>
+              </div>
+  
+              <div class="mt-3">
+                {% for email in c.joined_users %}
+                  <span class="badge-circle">{{ email[0]|upper }}</span>
+                {% endfor %}
+              </div>
+  
+              <form method="post" action="{{ url_for('contribute') }}" class="d-flex gap-2 mt-3">
+                <input type="hidden" name="challenge_id" value="{{ c._id }}">
+                <input type="number" step="0.01" name="amount" class="form-control" placeholder="Add ₹" required>
+                <button type="submit" class="btn btn-outline-primary btn-sm">Contribute</button>
+              </form>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p class="text-muted">You haven't joined any challenges yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  
+  
+    <!-- Completed Challenges -->
+    <div class="tab-pane fade" id="completed" role="tabpanel">
+      <div class="container mt-4">
+        <h2 class="text-success mb-4">Completed Challenges</h2>
+        {% if completed_challenges %}
+          <div class="row g-4">
+            {% for c in completed_challenges %}
+            <div class="col-md-4">
+              <div class="card p-3 border rounded-3 shadow">
+                <h5>{{ c.name }}</h5>
+                <p class="text-muted">{{ c.description }}</p>
+  
+                <p><strong>Goal:</strong> ${{ c.amount }}</p>
+                <p><strong>Total Saved:</strong> ${{ c.total }}</p>
+  
+                {% if c.status == 'won' %}
+                  <span class="badge bg-success px-3 py-2 rounded-pill">🎉 Bravooo! Group Challenge Completed.</span>
+                {% else %}
+                  <span class="badge bg-danger px-3 py-2 rounded-pill">😞 Group Challenge Lost</span>
+                {% endif %}
+  
+                <div class="mt-2 text-muted small">Deadline: {{ c.deadline }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No completed challenges to show yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+<!-- Modal -->
+<div class="modal fade" id="newChallengeModal" tabindex="-1" aria-labelledby="newChallengeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form class="modal-content" id="challengeForm" method="post" action="/groupChallenges">
+        <div class="modal-header">
+          <h5 class="modal-title" id="newChallengeModalLabel">Create a New Savings Challenge</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+  
+        <div class="modal-body">
+          <p class="text-muted">Set a goal and invite friends to save together</p>
+  
+          <div class="mb-3">
+            <label class="form-label">Challenge Name</label>
+            <input type="text" class="form-control" id="challengeName" name="challengeName" required>
+          </div>
+  
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Target Amount</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" class="form-control" id="targetAmount" name="targetAmount" required>
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Deadline</label>
+              <input type="date" class="form-control" id="deadline" name="deadline" required>
+            </div>
+          </div>
+  
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+          </div>
+        </div>
+  
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success" style="background-color: #00bfa5;">Create Challenge</button>
+        </div>
+      </form>
+    </div>
+  </div> 
+  
+  
+
+
+{% endblock %}
+</body>
+</html>
+

@@ -1,0 +1,30 @@
+body {
+  background-color: #fff;
+  color: #000;
+}
+
+.sidebar {
+  background-color: #28a745;
+}
+
+.nav-link {
+  color: #000;
+}
+
+.nav-link.active {
+  background-color: #e9ecef;
+  color: #000;
+}
+
+.nav-link:hover {
+  background-color: #24c089;
+  color: #000;
+}
+
+.sidebar-footer {
+  color: #555;
+}
+
+.main-content {
+  background-color: #fff;
+}

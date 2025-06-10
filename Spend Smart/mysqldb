@@ -1,0 +1,86 @@
+use wealthyinfyme;
+show databases;
+create database wealthyinfyme;
+
+create table login(
+	S_NO int primary key auto_increment,
+    email varchar(50) not null,
+    password varchar(50) not null);
+
+insert into login(email,password) values("anuragjaswal9211@gmail.com","Anu@123"),("anu@123","Anu@123");
+insert into login(email,password) values("anu123@gmail.com","anu123");
+
+select * from login;
+
+use wealthyinfyme;
+
+create table registration(
+	S_NO int primary key auto_increment,
+    Name varchar(50) not null,
+    email varchar(50) not null,
+    password varchar(50) not null,
+    Date date
+    );
+
+insert into registration(Name,email,password,Date) values("Prince222","prince123@gmail.com","prince@1222223",current_date());
+
+select * from login;
+select * from registration;
+
+
+DELIMITER //
+
+CREATE TRIGGER after_registration_insert
+AFTER INSERT ON registration
+FOR EACH ROW
+BEGIN
+    INSERT INTO login (email, password) 
+    VALUES (NEW.email, NEW.password);
+END
+//
+
+DELIMITER ;
+
+
+
+CREATE TABLE transactions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    amount DECIMAL(10, 2),
+    category VARCHAR(50),
+    description TEXT,
+    date DATE
+);
+
+select * from transactions;
+
+
+show tables;
+use wealthyinfyme;
+
+
+alter table login add column name varchar(50) not null after S_NO;
+
+
+show triggers;
+
+drop trigger after_registration_insert;
+
+
+
+DELIMITER //
+
+CREATE TRIGGER after_registration_insert
+AFTER INSERT ON registration
+FOR EACH ROW
+BEGIN
+    INSERT INTO login (name, email, password) 
+    VALUES (NEW.name, NEW.email, NEW.password);
+END;
+//
+
+DELIMITER ;
+
+update  login set name = "Anurag Jaswal" where S_NO=3;
+
+select * from login;
+

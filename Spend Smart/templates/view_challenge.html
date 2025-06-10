@@ -1,0 +1,157 @@
+{% extends "dashboard.html" %}
+
+{% block title %}{{ challenge.name }} - Wealthyfyme{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="mb-0 text-success">{{ challenge.name }}</h1>
+    <p class="text-muted mb-0">
+      <ion-icon name="calendar-outline"></ion-icon> 
+      Ends on {{ challenge.end_date.strftime('%b %d, %Y') }}
+    </p>
+  </div>
+  <a class="logout text-danger" href="{{ url_for('logout') }}">
+    <ion-icon name="log-out-outline"></ion-icon> Logout
+  </a>
+</div>
+
+<div class="row">
+  <!-- Challenge Summary -->
+  <div class="col-lg-8">
+    <div class="card border-1 shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Challenge Progress</h5>
+        
+        <div class="progress mb-3" style="height: 20px;">
+          <div class="progress-bar bg-success" 
+               role="progressbar" 
+               style="width: {{ progress_percentage }}%"
+               aria-valuenow="{{ challenge.current_amount }}" 
+               aria-valuemin="0" 
+               aria-valuemax="{{ challenge.target_amount }}">
+            {{ progress_percentage }}%
+          </div>
+        </div>
+        
+        <div class="row text-center">
+          <div class="col-md-4">
+            <div class="card border-1 shadow-sm">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-1 text-muted">Target</h6>
+                <h4 class="card-text text-success">₹{{ "{:,.2f}".format(challenge.target_amount) }}</h4>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card border-1 shadow-sm">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-1 text-muted">Achieved</h6>
+                <h4 class="card-text text-primary">₹{{ "{:,.2f}".format(challenge.current_amount) }}</h4>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card border-1 shadow-sm">
+              <div class="card-body">
+                <h6 class="card-subtitle mb-1 text-muted">Remaining</h6>
+                <h4 class="card-text text-{{ 'success' if remaining_amount >= 0 else 'danger' }}">
+                  ₹{{ "{:,.2f}".format(remaining_amount) }}
+                </h4>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="mt-4">
+          <h6>Description</h6>
+          <p>{{ challenge.description or "No description provided." }}</p>
+        </div>
+        
+        {% if challenge.creator == session['user_email'] %}
+        <div class="mt-3">
+          <a href="{{ url_for('edit_challenge', challenge_id=challenge._id) }}" 
+             class="btn btn-sm btn-outline-primary me-2">
+            <ion-icon name="create-outline"></ion-icon> Edit
+          </a>
+          <form method="POST" action="{{ url_for('delete_challenge', challenge_id=challenge._id) }}" 
+                class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <ion-icon name="trash-outline"></ion-icon> Delete
+            </button>
+          </form>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Participants Progress -->
+    <div class="card border-1 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Participants Progress</h5>
+        
+        {% for participant in participants_progress %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
+            <span>{{ participant.name }}</span>
+            <span>₹{{ "{:,.2f}".format(participant.saved) }} saved</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div class="progress-bar" 
+                 role="progressbar" 
+                 style="width: {{ (participant.saved / challenge.target_amount) * 100 }}%">
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  
+  <!-- Challenge Details -->
+  <div class="col-lg-4">
+    <div class="card border-1 shadow-sm mb-4">
+      <div class="card-body">
+        <h5 class="card-title">Challenge Details</h5>
+        
+        <div class="mb-3">
+          <h6 class="text-muted">Created By</h6>
+          <p>{{ challenge.creator_name }}</p>
+        </div>
+        
+        <div class="mb-3">
+          <h6 class="text-muted">Status</h6>
+          <span class="badge bg-{{ 'success' if challenge.active else 'secondary' }}">
+            {{ 'Active' if challenge.active else 'Completed' }}
+          </span>
+        </div>
+        
+        <div class="mb-3">
+          <h6 class="text-muted">Participants</h6>
+          <div class="d-flex flex-wrap gap-2">
+            {% for participant in challenge.participants %}
+            <span class="badge bg-light text-dark">
+              <ion-icon name="person-outline"></ion-icon> {{ participant }}
+            </span>
+            {% endfor %}
+          </div>
+        </div>
+        
+        {% if challenge.active and session['user_email'] not in challenge.participants %}
+        <form method="POST" action="{{ url_for('join_challenge', challenge_id=challenge._id) }}">
+          <button type="submit" class="btn btn-success w-100 mt-2">
+            <ion-icon name="person-add-outline"></ion-icon> Join Challenge
+          </button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Your Progress -->
+    <div class="card border-1 shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title">Your Progress</h5>
+        
+        {% if session['user_email'] in challenge.participants %}
